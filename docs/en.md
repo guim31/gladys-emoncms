@@ -60,8 +60,9 @@ feeds, of devices to add, of stopped feeds, and whether the write key works.
 
 Open the **Discover** tab of the integration: there is one device per feed tag
 (the feeds without a tag are grouped in a device named "Emoncms"). Add the ones
-you want. A new feed, or a renamed one, shows the device as updated: click
-**Update** to add it.
+you want. A new feed shows the device as updated: click **Update** to add it. A
+renamed feed keeps its first name in Gladys (feature names are fixed at
+creation).
 
 ## The devices
 
@@ -87,7 +88,8 @@ generic sensor.
 
 Values are sent to Gladys when they change. The last value of a **stopped**
 feed is not sent again as if it were fresh: its history in Gladys stops where
-the feed stopped. The device badge shows "local" (or "cloud" for emoncms.org),
+the feed stopped. With **Feed stopped after** set to "Never", there is no such
+check: the last value of a dead feed is sent again every 6 hours. The device badge shows "local" (or "cloud" for emoncms.org),
 and "unreachable" while Emoncms does not answer.
 
 ## Dashboard

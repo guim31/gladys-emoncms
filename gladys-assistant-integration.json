@@ -265,7 +265,7 @@
       "description": {
         "en": "A feed got no new value for the configured delay (a sensor or a node stopped), or updates again.",
         "fr": "Un flux n'a pas reçu de nouvelle valeur pendant le délai réglé (capteur ou nœud arrêté), ou se remet à jour.",
-        "de": "Ein Feed hat in der eingestellten Zeit keinen neuen Wert erhalten (Sensor oder Knoten aus), oder wieder.",
+        "de": "Ein Feed hat in der eingestellten Zeit keinen neuen Wert erhalten (Sensor oder Knoten aus), oder wird wieder aktualisiert.",
         "es": "Un feed no recibió valores nuevos durante el plazo configurado (sensor o nodo parado), o vuelve a recibirlos."
       },
       "fields": [

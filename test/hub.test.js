@@ -287,20 +287,22 @@ test('at most 240 states a minute, every feed in turn', async (t) => {
   const clock = createClock(Date.UTC(2026, 9, 16, 10));
   emoncms.touchAll(clock.seconds());
   const w = await world(t, { emoncms, clock });
-  // Added by the user: every value at once, the forced publication.
+  // Added by the user: the budget holds for the first publication too.
   await createDevices(w);
-  assert.equal(w.fake.states.length, 300);
+  assert.equal(w.fake.states.length, 240);
   for (const feed of emoncms.feeds) {
     feed.value += 1;
   }
   w.clock.advance(61_000);
   emoncms.touchAll(w.clock.seconds());
   await w.hub.pollNow();
-  assert.equal(w.fake.states.length, 540);
+  assert.equal(w.fake.states.length, 480);
+  const sent = new Set(w.fake.states.map((state) => state.device_feature_external_id));
+  assert.equal(sent.size, 300, 'the 60 never sent went first');
   w.clock.advance(61_000);
   emoncms.touchAll(w.clock.seconds());
   await w.hub.pollNow();
-  assert.equal(w.fake.states.length, 600, 'the 60 left waiting');
+  assert.equal(w.fake.states.length, 540, 'the 60 left waiting');
 });
 
 test('the container reads Emoncms on its own timer, without onPoll', async (t) => {
@@ -425,4 +427,62 @@ test('a reconnection of Gladys sends everything again', async (t) => {
   await w.gladys.connect();
   await w.hub.polling;
   assert.ok(w.fake.states.length >= before + 7);
+});
+
+test('changing the stopped-feed delay fires nothing by itself', async (t) => {
+  const w = await world(t);
+  w.clock.advance(30 * 60_000);
+  await w.hub.pollNow();
+  assert.equal(w.fake.sceneEvents.length, 7, 'every feed stopped');
+  for (const stale_after of ['0', '1440', '15']) {
+    await w.fake.configUpdated({ ...BASE_CONFIG, stale_after });
+  }
+  await w.hub.pollNow();
+  assert.equal(w.fake.sceneEvents.length, 7);
+});
+
+test('a configuration changed during a read reads the new server at once', async (t) => {
+  const w = await world(t);
+  const other = new FakeEmoncms({ url: 'http://198.51.100.20' });
+  const request = w.emoncms.request;
+  let release;
+  w.emoncms.request = (url, options) =>
+    url.startsWith('http://198.51.100.20')
+      ? other.request(url, options)
+      : new Promise((resolve) => {
+          release = () => resolve(request(url, options));
+        });
+  // registerHandlers captured the seam: route through the hub's client.
+  w.hub.request = (url, options) => w.emoncms.request(url, options);
+  w.hub.client.request = w.hub.request;
+  const reading = w.hub.pollNow();
+  const reconfigured = w.fake.configUpdated({ ...BASE_CONFIG, url: '198.51.100.20' });
+  release();
+  await reading;
+  await reconfigured;
+  assert.equal(other.requests.length, 1);
+  assert.equal(w.hub.readAt > 0, true);
+});
+
+test('a failed first read leaves the Discovery list alone', async (t) => {
+  const w = await world(t, { config: { ...BASE_CONFIG, read_apikey: 'ab'.repeat(16) } });
+  await w.fake.action('test_connection', {});
+  assert.equal(w.fake.discoveredDevices.length, 0);
+});
+
+test('a feed without a name keeps its widget row; the node defaults to gladys', async (t) => {
+  const emoncms = new FakeEmoncms();
+  emoncms.feeds[5].name = '';
+  emoncms.feeds[5].value = null;
+  const w = await world(t, { emoncms, config: { ...BASE_CONFIG, write_apikey: WRITE_KEY } });
+  await createDevices(w);
+  const ack = await w.fake.widgetGet(WIDGET_KEY, {
+    settings: { device: deviceId(w.gladys, 'emonpi') },
+  });
+  assert.deepEqual(validateWidgetContent(ack.data.content), []);
+  const rows = ack.data.content.components.find((c) => c.type === 'status').items;
+  assert.equal(rows[0].label, '#6');
+  const sent = await w.fake.sceneAction('send_value', { node: ' ', input: 'x', value: '2' });
+  assert.equal(sent.success, true, sent.error);
+  assert.equal(w.emoncms.posts[0].node, 'gladys');
 });

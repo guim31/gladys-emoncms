@@ -66,8 +66,9 @@ de escritura funciona.
 
 Abra la pestaña **Descubrir** de la integración: hay un dispositivo por
 etiqueta de feed (los feeds sin etiqueta se agrupan en un dispositivo llamado
-«Emoncms»). Añada los que quiera. Un feed nuevo, o renombrado, muestra el
-dispositivo como modificado: pulse **Actualizar** para añadirlo.
+«Emoncms»). Añada los que quiera. Un feed nuevo muestra el dispositivo como
+modificado: pulse **Actualizar** para añadirlo. Un feed renombrado conserva su
+primer nombre en Gladys (los nombres se fijan al crearlos).
 
 ## Los dispositivos
 
@@ -94,7 +95,8 @@ Un feed «kWh/d» sigue siendo un sensor genérico.
 
 Los valores se envían a Gladys cuando cambian. El último valor de un feed
 **detenido** no se vuelve a enviar como si fuera reciente: su historial en
-Gladys termina donde se detuvo el feed. La insignia del dispositivo indica
+Gladys termina donde se detuvo el feed. Con **Feed detenido tras** en «Nunca», esta comprobación
+no existe: el último valor de un feed muerto se reenvía cada 6 horas. La insignia del dispositivo indica
 «local» (o «nube» para emoncms.org), e «inaccesible» mientras Emoncms no
 responde.
 

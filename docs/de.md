@@ -65,8 +65,9 @@ Schreibschlüssel funktioniert.
 
 Öffne den Tab **Entdecken** der Integration: Dort steht ein Gerät pro Feed-Tag
 (die Feeds ohne Tag sind in einem Gerät namens „Emoncms“ zusammengefasst). Füge
-die gewünschten hinzu. Ein neuer oder umbenannter Feed zeigt das Gerät als
-geändert an: Klicke auf **Aktualisieren**, um ihn hinzuzufügen.
+die gewünschten hinzu. Ein neuer Feed zeigt das Gerät als geändert an: Klicke
+auf **Aktualisieren**, um ihn hinzuzufügen. Ein umbenannter Feed behält in
+Gladys seinen ersten Namen (Namen werden beim Anlegen festgelegt).
 
 ## Die Geräte
 
@@ -93,7 +94,9 @@ Ein kWh-Feed aus dem Emoncms-Prozess „Power to kWh“ ist einer. Ein
 
 Die Werte gehen an Gladys, wenn sie sich ändern. Der letzte Wert eines
 **gestoppten** Feeds wird nicht erneut gesendet, als wäre er frisch: Sein
-Verlauf in Gladys endet dort, wo der Feed gestoppt hat. Das Geräte-Badge zeigt
+Verlauf in Gladys endet dort, wo der Feed gestoppt hat. Steht **Feed gestoppt nach** auf „Nie“, gibt es diese
+Prüfung nicht: Der letzte Wert eines toten Feeds wird alle 6 Stunden erneut
+gesendet. Das Geräte-Badge zeigt
 „lokal“ (oder „Cloud“ für emoncms.org) und „nicht erreichbar“, solange Emoncms
 nicht antwortet.
 

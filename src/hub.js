@@ -119,6 +119,9 @@ export class EmoncmsHub {
   }
 
   async reconfigure(config) {
+    // A read in progress belongs to the previous configuration: let it end,
+    // or the read below would share it.
+    await this.polling?.catch(() => {});
     const previous = this.config;
     this.config = config;
     if (this.signature !== signature(config)) {
@@ -131,6 +134,11 @@ export class EmoncmsHub {
       this.stale.clear();
       this.error = null;
       this.readAt = 0;
+    }
+    // Another delay is another rule: the next read only records, like a first
+    // read, instead of firing every feed it moves across the delay.
+    if (previous && previous.staleAfterMs !== config.staleAfterMs) {
+      this.stale.clear();
     }
     if (
       previous?.language !== config.language ||
@@ -204,7 +212,8 @@ export class EmoncmsHub {
 
   /** Publish the Discovery list when it changed (a feed created, renamed, moved…). */
   async publishDevices({ force = false } = {}) {
-    if (this.readAt === 0 && !force) {
+    // Nothing read yet (a first read failed): keep the list Gladys has.
+    if (this.readAt === 0) {
       return;
     }
     const devices = this.discoveredDevices();
@@ -344,7 +353,7 @@ export class EmoncmsHub {
         device_name: feed.tag || UNTAGGED_NAME,
         status_label: pick(FEED_STATUS_TEXT[status], this.config.language),
         minutes: Math.round((this.now() - feed.time) / 60_000),
-        value: feed.value,
+        value: gladysValue(feed),
       });
     }
     for (const id of [...this.stale.keys()]) {
@@ -403,12 +412,11 @@ export class EmoncmsHub {
       due.push({ externalId, value, at: at ?? 0 });
     }
     this.sentTimes = this.sentTimes.filter((time) => now - time < 60_000);
-    let states = due;
-    if (!force) {
-      const allowed = Math.max(0, this.timings.statesPerMinute - this.sentTimes.length);
-      // The values waiting the longest first: every feed gets its turn.
-      states = due.sort((a, b) => a.at - b.at).slice(0, allowed);
-    }
+    // The budget holds for a device just added too: what does not fit now is
+    // never published, hence due at the next reads.
+    const allowed = Math.max(0, this.timings.statesPerMinute - this.sentTimes.length);
+    // The values waiting the longest first: every feed gets its turn.
+    const states = due.sort((a, b) => a.at - b.at).slice(0, allowed);
     for (let at = 0; at < states.length; at += MAX_PER_REQUEST) {
       const batch = states.slice(at, at + MAX_PER_REQUEST);
       try {
@@ -578,7 +586,8 @@ export class EmoncmsHub {
     if (!this.config.writeKey) {
       throw new Error(pick(ACTION_TEXT.noWriteKey, language));
     }
-    const nodeName = typeof node === 'string' ? node.trim() : '';
+    // The core may not apply the default of a scene action field.
+    const nodeName = (typeof node === 'string' ? node.trim() : '') || 'gladys';
     const inputName = typeof name === 'string' ? name.trim() : '';
     if (!INPUT_NAME.test(nodeName) || !INPUT_NAME.test(inputName)) {
       throw new Error(pick(ACTION_TEXT.badName, language));

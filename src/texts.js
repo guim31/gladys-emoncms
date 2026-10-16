@@ -75,7 +75,12 @@ export const ERROR_TEXT = {
 // The state of a feed, in words (scene event variable).
 export const FEED_STATUS_TEXT = {
   stopped: { en: 'Stopped', fr: 'Arrêté', de: 'Gestoppt', es: 'Detenido' },
-  resumed: { en: 'Updating again', fr: 'De nouveau à jour', de: 'Wieder aktuell', es: 'Activo' },
+  resumed: {
+    en: 'Updating again',
+    fr: 'De nouveau à jour',
+    de: 'Wieder aktuell',
+    es: 'Activo de nuevo',
+  },
 };
 
 // The "Test the connection" report.

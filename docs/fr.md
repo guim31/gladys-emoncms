@@ -68,9 +68,9 @@ clé d'écriture fonctionne.
 
 Ouvrez l'onglet **Découverte** de l'intégration : il y a un appareil par
 étiquette de flux (les flux sans étiquette sont regroupés dans un appareil
-nommé « Emoncms »). Ajoutez ceux que vous voulez. Un nouveau flux, ou un flux
-renommé, fait apparaître l'appareil comme modifié : cliquez sur **Mettre à
-jour** pour l'ajouter.
+nommé « Emoncms »). Ajoutez ceux que vous voulez. Un nouveau flux fait apparaître l'appareil
+comme modifié : cliquez sur **Mettre à jour** pour l'ajouter. Un flux renommé
+garde son premier nom dans Gladys (les noms sont figés à la création).
 
 ## Les appareils
 
@@ -97,7 +97,9 @@ flux « kWh/d » reste un capteur générique.
 
 Les valeurs partent vers Gladys quand elles changent. La dernière valeur d'un
 flux **arrêté** n'est pas renvoyée comme si elle était fraîche : son historique
-dans Gladys s'arrête là où le flux s'est arrêté. Le badge de l'appareil indique
+dans Gladys s'arrête là où le flux s'est arrêté. Avec **Flux arrêté après** réglé sur « Jamais », cette
+vérification n'existe pas : la dernière valeur d'un flux mort est renvoyée
+toutes les 6 heures. Le badge de l'appareil indique
 « local » (ou « cloud » pour emoncms.org), et « injoignable » tant qu'Emoncms
 ne répond pas.
 

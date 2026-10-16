@@ -76,10 +76,11 @@ function errorRow(kind, language) {
 function overview(hub, language) {
   const groups = [...groupByTag(hub.feeds)];
   const stopped = hub.feeds.filter((feed) => hub.isFeedStale(feed)).length;
+  const valued = hub.feeds.filter((feed) => feed.value !== null).length;
   const components = [
     {
       type: 'value',
-      value: hub.feeds.length - stopped,
+      value: valued - stopped,
       label: text('updating', language),
       icon: 'activity',
       color: WIDGET_COLORS.SUCCESS,
@@ -122,13 +123,13 @@ function deviceContent(hub, view, language) {
     }
     if (feed.value === null) {
       rows.push({
-        label: feed.name.slice(0, 40),
+        label: (feed.name || `#${feed.id}`).slice(0, 40),
         value: text('noValue', language),
         color: WIDGET_COLORS.NEUTRAL,
       });
     } else if (stale) {
       rows.push({
-        label: feed.name.slice(0, 40),
+        label: (feed.name || `#${feed.id}`).slice(0, 40),
         value: labelled(text('stoppedFor', language), formatAge(ageMs, language), language),
         color: WIDGET_COLORS.WARNING,
       });
