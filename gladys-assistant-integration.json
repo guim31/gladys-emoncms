@@ -1,177 +1,435 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Emoncms",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Your Emoncms feeds in Gladys (emonPi, emonTx, emonHP): power, energy, temperatures and more.",
+    "fr": "Vos flux Emoncms dans Gladys (emonPi, emonTx, emonHP) : puissance, énergie, températures…",
+    "de": "Deine Emoncms-Feeds in Gladys (emonPi, emonTx, emonHP): Leistung, Energie, Temperaturen …",
+    "es": "Sus feeds de Emoncms en Gladys (emonPi, emonTx, emonHP): potencia, energía, temperaturas…"
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-emoncms:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-emoncms/main/cover.png",
+  "categories": ["energy"],
   "transports": ["local", "cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your Emoncms server",
+        "fr": "Votre serveur Emoncms",
+        "de": "Dein Emoncms-Server",
+        "es": "Su servidor Emoncms"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "An emonPi, an emonBase, your own server or emoncms.org. The API keys are on the My Account page of Emoncms. Every feed tag (emonpi, emontx…) becomes a device: add the ones you want from the Discover tab.",
+        "fr": "Un emonPi, un emonBase, votre propre serveur ou emoncms.org. Les clés d'API sont sur la page My Account d'Emoncms. Chaque étiquette de flux (emonpi, emontx…) devient un appareil : ajoutez ceux voulus depuis l'onglet Découverte.",
+        "de": "Ein emonPi, eine emonBase, dein eigener Server oder emoncms.org. Die API-Schlüssel stehen auf der Seite My Account von Emoncms. Jedes Feed-Tag (emonpi, emontx …) wird ein Gerät: Füge die gewünschten im Tab „Entdecken“ hinzu.",
+        "es": "Un emonPi, un emonBase, su propio servidor o emoncms.org. Las claves API están en la página My Account de Emoncms. Cada etiqueta de feed (emonpi, emontx…) se convierte en un dispositivo: añada los que quiera desde la pestaña Descubrir."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/guim31/gladys-emoncms/blob/main/docs/en.md",
+          "label": {
+            "en": "Setup guide",
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "url",
+      "type": "string",
+      "label": {
+        "en": "Emoncms address",
+        "fr": "Adresse d'Emoncms",
+        "de": "Emoncms-Adresse",
+        "es": "Dirección de Emoncms"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
+      "description": {
+        "en": "The address you open Emoncms at, with its sub-path if any (/emoncms on some servers).",
+        "fr": "L'adresse à laquelle vous ouvrez Emoncms, avec son sous-chemin éventuel (/emoncms sur certains serveurs).",
+        "de": "Die Adresse, unter der du Emoncms öffnest, mit Unterpfad falls nötig (/emoncms auf manchen Servern).",
+        "es": "La dirección en la que abre Emoncms, con su subruta si la hay (/emoncms en algunos servidores)."
+      },
       "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "placeholder": {
+        "en": "http://192.168.1.20",
+        "fr": "http://192.168.1.20",
+        "de": "http://192.168.1.20",
+        "es": "http://192.168.1.20"
+      },
+      "default": ""
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "read_apikey",
+      "type": "secret",
+      "label": {
+        "en": "Read API key",
+        "fr": "Clé d'API de lecture",
+        "de": "Lese-API-Schlüssel",
+        "es": "Clave API de lectura"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "description": {
+        "en": "Enough to read the feeds. 32 characters, on the My Account page.",
+        "fr": "Suffit pour lire les flux. 32 caractères, sur la page My Account.",
+        "de": "Reicht zum Lesen der Feeds. 32 Zeichen, auf der Seite My Account.",
+        "es": "Suficiente para leer los feeds. 32 caracteres, en la página My Account."
+      },
+      "required": true
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "key": "write_apikey",
+      "type": "secret",
+      "label": {
+        "en": "Write API key (optional)",
+        "fr": "Clé d'API d'écriture (facultative)",
+        "de": "Schreib-API-Schlüssel (optional)",
+        "es": "Clave API de escritura (opcional)"
+      },
+      "description": {
+        "en": "Only for the scene action that sends values from Gladys to Emoncms. Leave empty otherwise.",
+        "fr": "Seulement pour l'action de scène qui envoie des valeurs de Gladys vers Emoncms. Sinon, laissez vide.",
+        "de": "Nur für die Szenenaktion, die Werte von Gladys an Emoncms sendet. Sonst leer lassen.",
+        "es": "Solo para la acción de escena que envía valores de Gladys a Emoncms. Si no, déjela vacía."
+      },
+      "required": false
+    },
+    {
+      "key": "feeds",
+      "type": "string",
+      "label": {
+        "en": "Feeds to follow",
+        "fr": "Flux à suivre",
+        "de": "Zu verfolgende Feeds",
+        "es": "Feeds que seguir"
+      },
+      "description": {
+        "en": "Feed ids separated by commas (column Id of the Feeds page). Empty: every feed.",
+        "fr": "Numéros de flux séparés par des virgules (colonne Id de la page Feeds). Vide : tous les flux.",
+        "de": "Feed-IDs durch Kommas getrennt (Spalte Id der Seite Feeds). Leer: alle Feeds.",
+        "es": "Números de feed separados por comas (columna Id de la página Feeds). Vacío: todos los feeds."
+      },
       "required": false,
-      "default": "celsius",
+      "placeholder": {
+        "en": "e.g. 1, 2, 5",
+        "fr": "ex. 1, 2, 5",
+        "de": "z. B. 1, 2, 5",
+        "es": "p. ej. 1, 2, 5"
+      },
+      "default": ""
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle de rafraîchissement",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
+      "description": {
+        "en": "One request per refresh for every feed. Emoncms itself records every 10 seconds.",
+        "fr": "Une requête par rafraîchissement pour tous les flux. Emoncms enregistre lui-même toutes les 10 secondes.",
+        "de": "Eine Anfrage pro Aktualisierung für alle Feeds. Emoncms selbst speichert alle 10 Sekunden.",
+        "es": "Una petición por actualización para todos los feeds. Emoncms guarda cada 10 segundos."
+      },
+      "required": false,
+      "default": "10",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        { "value": "5", "label": { "en": "5 s", "fr": "5 s", "de": "5 s", "es": "5 s" } },
+        { "value": "10", "label": { "en": "10 s", "fr": "10 s", "de": "10 s", "es": "10 s" } },
+        { "value": "30", "label": { "en": "30 s", "fr": "30 s", "de": "30 s", "es": "30 s" } },
+        {
+          "value": "60",
+          "label": { "en": "1 minute", "fr": "1 minute", "de": "1 Minute", "es": "1 minuto" }
+        },
+        {
+          "value": "300",
+          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "stale_after",
+      "type": "select",
+      "label": {
+        "en": "Feed stopped after",
+        "fr": "Flux arrêté après",
+        "de": "Feed gestoppt nach",
+        "es": "Feed detenido tras"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "A feed without a new value for this long counts as stopped: its old value is no longer sent to Gladys, and the scene trigger fires.",
+        "fr": "Un flux sans nouvelle valeur depuis ce délai est considéré comme arrêté : sa dernière valeur n'est plus envoyée à Gladys, et le déclencheur de scène se lance.",
+        "de": "Ein Feed ohne neuen Wert seit dieser Dauer gilt als gestoppt: Sein alter Wert wird nicht mehr an Gladys gesendet, und der Szenenauslöser startet.",
+        "es": "Un feed sin valor nuevo durante este tiempo se considera detenido: su último valor ya no se envía a Gladys y se activa el disparador de escena."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "15",
+      "options": [
+        {
+          "value": "0",
+          "label": { "en": "Never", "fr": "Jamais", "de": "Nie", "es": "Nunca" }
+        },
+        {
+          "value": "5",
+          "label": { "en": "5 minutes", "fr": "5 minutes", "de": "5 Minuten", "es": "5 minutos" }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "15 minutes",
+            "fr": "15 minutes",
+            "de": "15 Minuten",
+            "es": "15 minutos"
+          }
+        },
+        {
+          "value": "60",
+          "label": { "en": "1 hour", "fr": "1 heure", "de": "1 Stunde", "es": "1 hora" }
+        },
+        {
+          "value": "360",
+          "label": { "en": "6 hours", "fr": "6 heures", "de": "6 Stunden", "es": "6 horas" }
+        },
+        {
+          "value": "1440",
+          "label": { "en": "1 day", "fr": "1 jour", "de": "1 Tag", "es": "1 día" }
+        }
+      ]
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the messages",
+        "fr": "Langue des messages",
+        "de": "Sprache der Meldungen",
+        "es": "Idioma de los mensajes"
+      },
+      "description": {
+        "en": "Language of the scene variables and of the errors (Gladys does not tell an integration yours).",
+        "fr": "Langue des variables de scène et des erreurs (Gladys ne transmet pas la vôtre à une intégration).",
+        "de": "Sprache der Szenenvariablen und der Fehler (Gladys teilt einer Integration deine nicht mit).",
+        "es": "Idioma de las variables de escena y de los errores (Gladys no comunica el suyo a una integración)."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": { "en": "English", "fr": "Anglais", "de": "Englisch", "es": "Inglés" }
+        },
+        {
+          "value": "fr",
+          "label": { "en": "French", "fr": "Français", "de": "Französisch", "es": "Francés" }
+        },
+        {
+          "value": "de",
+          "label": { "en": "German", "fr": "Allemand", "de": "Deutsch", "es": "Alemán" }
+        },
+        {
+          "value": "es",
+          "label": { "en": "Spanish", "fr": "Espagnol", "de": "Spanisch", "es": "Español" }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "feed_status_changed",
+      "label": {
+        "en": "Emoncms feed stopped or back",
+        "fr": "Flux Emoncms arrêté ou revenu",
+        "de": "Emoncms-Feed gestoppt oder zurück",
+        "es": "Feed de Emoncms detenido o de vuelta"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A feed got no new value for the configured delay (a sensor or a node stopped), or updates again.",
+        "fr": "Un flux n'a pas reçu de nouvelle valeur pendant le délai réglé (capteur ou nœud arrêté), ou se remet à jour.",
+        "de": "Ein Feed hat in der eingestellten Zeit keinen neuen Wert erhalten (Sensor oder Knoten aus), oder wird wieder aktualisiert.",
+        "es": "Un feed no recibió valores nuevos durante el plazo configurado (sensor o nodo parado), o vuelve a recibirlos."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": { "en": "Device", "fr": "Appareil", "de": "Gerät", "es": "Dispositivo" }
         },
         {
-          "key": "target",
+          "key": "status",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": { "en": "Change", "fr": "Changement", "de": "Änderung", "es": "Cambio" },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "stopped",
+              "label": { "en": "Stopped", "fr": "Arrêté", "de": "Gestoppt", "es": "Detenido" }
+            },
+            {
+              "value": "resumed",
+              "label": {
+                "en": "Updating again",
+                "fr": "De nouveau à jour",
+                "de": "Wieder aktuell",
+                "es": "Activo de nuevo"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "feed_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": { "en": "Feed", "fr": "Flux", "de": "Feed", "es": "Feed" }
+        },
+        {
+          "key": "feed_id",
+          "type": "number",
+          "label": {
+            "en": "Feed id",
+            "fr": "Numéro du flux",
+            "de": "Feed-ID",
+            "es": "Número del feed"
+          }
+        },
+        {
+          "key": "device_name",
+          "type": "string",
+          "label": {
+            "en": "Device (tag)",
+            "fr": "Appareil (étiquette)",
+            "de": "Gerät (Tag)",
+            "es": "Dispositivo (etiqueta)"
+          }
+        },
+        {
+          "key": "status_label",
+          "type": "string",
+          "label": { "en": "State", "fr": "État", "de": "Zustand", "es": "Estado" }
+        },
+        {
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes since the last value",
+            "fr": "Minutes depuis la dernière valeur",
+            "de": "Minuten seit dem letzten Wert",
+            "es": "Minutos desde el último valor"
+          }
+        },
+        {
+          "key": "value",
+          "type": "number",
+          "label": {
+            "en": "Last value",
+            "fr": "Dernière valeur",
+            "de": "Letzter Wert",
+            "es": "Último valor"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "send_value",
+      "label": {
+        "en": "Send a value to Emoncms",
+        "fr": "Envoyer une valeur à Emoncms",
+        "de": "Einen Wert an Emoncms senden",
+        "es": "Enviar un valor a Emoncms"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Posts a number to an Emoncms input (write key needed), e.g. a value read by the previous action.",
+        "fr": "Envoie un nombre vers une entrée Emoncms (clé d'écriture requise), ex. une valeur lue par l'action précédente.",
+        "de": "Sendet eine Zahl an einen Emoncms-Eingang (Schreibschlüssel nötig), z. B. einen zuvor gelesenen Wert.",
+        "es": "Envía un número a una entrada de Emoncms (clave de escritura necesaria), p. ej. un valor leído antes."
+      },
+      "timeout_seconds": 20,
       "fields": [
         {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "key": "node",
+          "type": "string",
+          "label": { "en": "Node", "fr": "Nœud", "de": "Knoten", "es": "Nodo" },
+          "required": true,
+          "default": "gladys"
+        },
+        {
+          "key": "input",
+          "type": "string",
+          "label": {
+            "en": "Input name",
+            "fr": "Nom de l'entrée",
+            "de": "Name des Eingangs",
+            "es": "Nombre de la entrada"
+          },
+          "required": true
+        },
+        {
+          "key": "value",
+          "type": "string",
+          "label": { "en": "Value", "fr": "Valeur", "de": "Wert", "es": "Valor" },
           "required": true
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "sent",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": { "en": "Sent", "fr": "Envoyée", "de": "Gesendet", "es": "Enviado" }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "feeds",
+      "label": {
+        "en": "Emoncms feeds",
+        "fr": "Flux Emoncms",
+        "de": "Emoncms-Feeds",
+        "es": "Feeds de Emoncms"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Live values of a device, and the feeds that stopped updating.",
+        "fr": "Valeurs en direct d'un appareil, et les flux qui ne se mettent plus à jour.",
+        "de": "Live-Werte eines Geräts und die Feeds, die nicht mehr aktualisiert werden.",
+        "es": "Valores en directo de un dispositivo y los feeds que ya no se actualizan."
+      },
+      "icon": "zap",
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Device (empty: overview)",
+            "fr": "Appareil (vide : vue d'ensemble)",
+            "de": "Gerät (leer: Übersicht)",
+            "es": "Dispositivo (vacío: resumen)"
+          }
+        }
+      ]
     }
   ]
 }
