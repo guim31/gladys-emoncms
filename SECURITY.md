@@ -30,6 +30,13 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration reads the HTTP API of the Emoncms server configured in Gladys
+(local network or emoncms.org) and writes to it only through the "Send a value
+to Emoncms" scene action, to the inputs it names. The read and write API keys
+are kept by Gladys in the integration configuration, sent only to that server
+in an `Authorization` header (never in a URL), and never logged. Nothing is
+stored under `/data`.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and Emoncms, emoncms.org and the devices that post to them.

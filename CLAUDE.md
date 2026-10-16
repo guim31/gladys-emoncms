@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "stopped" # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,21 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only (registerHandlers + shutdown)
+src/app.js                        every SDK handler, wired to the hub (the tests use it too)
+src/hub.js                        EmoncmsHub: timer, discovery, states, stopped feeds, status, report, send
+src/devices.js                    feeds -> Gladys devices: one per tag, units -> category/type, values
+src/emoncms/client.js             HTTP client (Bearer API key), error kinds
+src/emoncms/model.js              feed list normalization, stopped-feed rule
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget `feeds` (manifest `widgets`)
+src/texts.js                      every text sent outside the widget, four languages
+src/logs.js                       one log line per outage, not one per read
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
+test/                             node --test, against the SDK's fake Gladys and a fake Emoncms
+test/fixtures/emoncms/            the feed list recorded on a real Emoncms 11.9.10
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +75,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, manifest texts, widget texts and `docs/{en,fr,de,es}.md`, kept in
+  sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +239,32 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Emoncms (API, choix, pièges)
+
+- **API** (Emoncms 11.9.10 vérifié en Docker, image tout-en-un `alexjunk/emoncms`) : une seule requête
+  par cycle, `GET /feed/list.json?meta=1` (id, tag, name, unit, value, time en secondes, `interval` des
+  flux PHPFina grâce à `meta=1`). Les nombres arrivent parfois en chaînes (`"id": "1"`), `value` à `null`
+  ou `false` pour un flux jamais écrit. Clé : en-tête `Authorization: Bearer <clé>` (accepté depuis
+  Emoncms 9), jamais dans l'URL, pour qu'aucune adresse avec clé n'atteigne un log.
+- **Réponses d'erreur** : clé inconnue → 401 `Invalid API key` (texte) ; sans clé → 200 `false` ;
+  route inconnue → 406 JSON ; `/input/post` avec la clé de lecture → **200 corps vide** (seul
+  `{"success": true}` vaut écriture) ; `/user/get.json` ne répond l'utilisateur qu'à la clé
+  d'écriture (`false` sinon) : c'est le test de la clé d'écriture, sans rien écrire.
+- **Processus d'entrée** (pour créer des flux de test) : `POST /input/process/set.json?inputid=N`, corps
+  `processlist=<JSON>` au format v11 `[{"fn":"process__log_to_feed","args":[feedid]}]` ; l'ancien format
+  `1:2,4:3` est refusé (« Invalid process list format »).
+- **Identité** : appareil = étiquette (`tagId` : le mot tel quel s'il est `[a-z0-9_-]{1,40}`, sinon
+  `_` + 12 hex de SHA-1), fonctionnalité = `feed_<id>`. Un flux qui change d'étiquette change
+  d'appareil **et** d'identifiant (pas de 409). Le serveur n'entre pas dans l'identité : changer
+  d'adresse IP garde les appareils.
+- **Unités** : kWh/Wh/MWh → `energy-sensor/index` (le seul couple que l'onglet énergie dérive en
+  consommation, avec `energy-sensor/energy`) ; L/min → `water-valve/flow` en m³/h (×0,06, pas d'unité
+  L/min dans Gladys) ; VA, var, %, ppm, dB → `unknown/unknown` avec l'unité ; Hz, kWh/d, texte libre →
+  `unknown/unknown` sans unité, l'unité dans le nom. Le test de conformité vérifie aussi
+  `units_by_category`.
+- **Flux arrêté** : âge > max(délai réglé, 3 × `interval`) ; sa valeur n'est jamais republiée (ni au
+  battement de 6 h, ni à `onDeviceCreated`), et le déclencheur `feed_status_changed` part au
+  changement (rien à la première lecture). Les horloges de Gladys et d'Emoncms doivent concorder.
+- **Envoi vers Emoncms** : le SDK ne permet pas de lire les états des autres appareils ; l'équivalent
+  d'`emoncms_history` est l'action de scène `send_value` (variables de scène substituées par le cœur).

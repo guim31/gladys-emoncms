@@ -1,0 +1,172 @@
+# Emoncms
+
+[Emoncms](https://emoncms.org/) ist die freie Energie-Monitoring-Software von
+[OpenEnergyMonitor](https://openenergymonitor.org/): Emoncms zeichnet die
+Feeds eines emonPi, eines emonTx, eines emonHP-Wärmepumpenmonitors oder jedes Sensors
+auf, der an sie sendet, auf einem lokalen Server oder auf emoncms.org. Diese
+Integration bringt diese Feeds in Gladys: ein Gerät pro Feed-Tag (in der Praxis
+eines pro Knoten: `emonpi`, `emontx4`, `heatpump` …), eine Funktion pro Feed,
+mit dem passenden Gladys-Typ für seine Einheit. Die kumulierten Energie-Feeds
+(kWh) kann der Energie-Tab von Gladys nutzen. Eine Szene kann reagieren, wenn
+ein Feed nicht mehr aktualisiert wird, Werte von Gladys an Emoncms senden, und
+ein Dashboard-Widget zeigt, welche Feeds noch aktiv sind.
+
+Getestet mit einem echten Emoncms-11.9.10-Server (Docker), mit Eingängen, die
+über seine API gesendet und in Feeds für Leistung, Energie, Spannung,
+Temperatur und Durchfluss umgewandelt wurden. Ohne die Hardware entwickelt
+(kein emonPi oder emonTx zur Hand): Rückmeldungen sind willkommen in
+[den Issues](https://github.com/guim31/gladys-emoncms/issues). emoncms.org
+nutzt dieselbe API, wurde aber nicht getestet (kein Konto).
+
+## Was du brauchst
+
+- Gladys Assistant 5.1.0 oder neuer.
+- Einen Emoncms-Server, den der Gladys-Rechner erreicht: einen emonPi oder eine
+  emonBase in deinem Netz, deinen eigenen Server oder ein Konto auf
+  emoncms.org.
+- Den **Lese-API-Schlüssel** des Emoncms-Kontos (Seite **My Account** von
+  Emoncms). Den **Schreib-API-Schlüssel** nur, wenn du Werte von Gladys an
+  Emoncms senden willst.
+
+Die Integration liest nur, außer du nutzt die Szenenaktion „Einen Wert an
+Emoncms senden“: Dann schreibt sie nur in die Eingänge, die du angibst.
+
+## Erste Schritte
+
+### 1. Adresse und Schlüssel finden
+
+Öffne Emoncms im Browser und notiere die Adresse: `http://192.168.1.20`,
+`http://emonpi.local/emoncms` (manche Server liefern Emoncms unter `/emoncms`
+aus) oder `https://emoncms.org`. Du kannst die Adresse jeder Emoncms-Seite
+einfügen: Die Integration behält nur die Wurzel. Öffne dann **My Account**: Der
+Lese- und der Schreib-API-Schlüssel sind 32 Zeichen lang.
+
+### 2. Die Integration konfigurieren
+
+Öffne in Gladys die Konfigurationsseite der Integration:
+
+- **Emoncms-Adresse**: die oben notierte Adresse.
+- **Lese-API-Schlüssel**: reicht, um alle Feeds zu lesen.
+- **Schreib-API-Schlüssel (optional)**: nur für die Szenenaktion, die Werte
+  sendet.
+- **Zu verfolgende Feeds**: die IDs der Feeds, die in Gladys erscheinen sollen
+  (Spalte Id der Seite Feeds), durch Kommas getrennt. Leer: alle Feeds.
+- **Aktualisierungsintervall**: von 5 Sekunden bis 5 Minuten, standardmäßig 10
+  Sekunden. Jede Aktualisierung ist eine einzige Anfrage für alle Feeds.
+- **Feed gestoppt nach**: Ein Feed ohne neuen Wert seit dieser Dauer gilt als
+  gestoppt (standardmäßig 15 Minuten, „Nie“ schaltet die Prüfung ab).
+- **Sprache der Meldungen**: Sprache der Szenenvariablen und der Fehler.
+
+Klicke dann auf **Verbindung testen**: Die Integration liest Emoncms und nennt
+die Zahl der Feeds, der hinzuzufügenden Geräte, der gestoppten Feeds und ob der
+Schreibschlüssel funktioniert.
+
+### 3. Die Geräte hinzufügen
+
+Öffne den Tab **Entdecken** der Integration: Dort steht ein Gerät pro Feed-Tag
+(die Feeds ohne Tag sind in einem Gerät namens „Emoncms“ zusammengefasst). Füge
+die gewünschten hinzu. Ein neuer oder umbenannter Feed zeigt das Gerät als
+geändert an: Klicke auf **Aktualisieren**, um ihn hinzuzufügen.
+
+## Die Geräte
+
+Jeder Feed wird eine Funktion mit dem Namen des Feeds, typisiert nach seiner
+Einheit:
+
+| Emoncms-Einheit          | In Gladys                                               |
+| ------------------------ | ------------------------------------------------------- |
+| W, kW                    | Leistung (mit Vorzeichen: negativ ist eine Einspeisung) |
+| kWh, Wh, MWh             | Energiezählerstand, vom Energie-Tab von Gladys genutzt  |
+| V, A, mA                 | Spannung, Strom                                         |
+| °C, °F, K                | Temperatur                                              |
+| L, m³                    | Volumen                                                 |
+| L/min, L/h, m³/h         | Wasserdurchfluss, in m³/h (12,5 L/min = 0,75 m³/h)      |
+| hPa, mbar, Pa, kPa, bar  | Druck                                                   |
+| lux                      | Helligkeit                                              |
+| pulses                   | Zähler                                                  |
+| VA, kVA, var, %, ppm, dB | Allgemeiner Sensor, mit seiner Einheit                  |
+| keine, Hz, kWh/d, andere | Allgemeiner Sensor, die Einheit im Namen                |
+
+Nur die kumulierten Energie-Feeds (kWh, Wh, MWh) werden ein Energiezählerstand:
+Ein kWh-Feed aus dem Emoncms-Prozess „Power to kWh“ ist einer. Ein
+„kWh/d“-Feed bleibt ein allgemeiner Sensor.
+
+Die Werte gehen an Gladys, wenn sie sich ändern. Der letzte Wert eines
+**gestoppten** Feeds wird nicht erneut gesendet, als wäre er frisch: Sein
+Verlauf in Gladys endet dort, wo der Feed gestoppt hat. Das Geräte-Badge zeigt
+„lokal“ (oder „Cloud“ für emoncms.org) und „nicht erreichbar“, solange Emoncms
+nicht antwortet.
+
+## Dashboard
+
+Das Widget **Emoncms-Feeds** hat eine Einstellung, **Gerät (leer: Übersicht)**:
+
+- leer zeigt es die Zahl der aktuellen und gestoppten Feeds, dann eine Zeile
+  pro Gerät, orange, wenn einer seiner Feeds gestoppt hat;
+- mit einem Gerät zeigt es seine ersten sechs Feeds als Live-Kacheln, dann die
+  gestoppten Feeds mit der Zeit seit ihrem letzten Wert.
+
+## Szenen
+
+### Auslöser
+
+**Emoncms-Feed gestoppt oder zurück**: Ein Feed hat in der unter **Feed
+gestoppt nach** eingestellten Zeit keinen neuen Wert erhalten, oder wird wieder
+aktualisiert. Filter: das Gerät und die Änderung (Gestoppt, Wieder aktuell).
+Variablen: der Feed, seine ID, das Gerät (Tag), der Zustand, die Minuten seit
+dem letzten Wert und der letzte Wert. Beim Start der Integration wird nichts
+ausgelöst, nur bei einer Änderung, die sie im Betrieb sieht.
+
+### Aktionen
+
+**Einen Wert an Emoncms senden**: sendet eine Zahl an einen Emoncms-Eingang, wie
+es ein emonTx täte, mit dem Schreibschlüssel. Felder: **Knoten** (standardmäßig
+`gladys`), **Name des Eingangs**, **Wert**. Der Wert kann eine Szenenvariable
+sein, zum Beispiel ein Wert, den die Aktion „Gerätewert abrufen“ kurz davor
+gelesen hat. In Emoncms erscheint der Eingang auf der Seite Inputs: Speichere
+ihn in einem Feed, um seinen Verlauf zu behalten. Ausgabe: **Gesendet**.
+
+### Ideen für Szenen
+
+- **emonTx ausgefallen**: Auslöser „Emoncms-Feed gestoppt oder zurück“,
+  Änderung „Gestoppt“, Gerät `emontx` → Nachricht senden „Emoncms:
+  {{feed_name}} seit {{minutes}} Min. gestoppt“.
+- **Einen Zigbee-Sensor in Emoncms behalten**: Auslöser auf die Temperatur
+  eines Gladys-Sensors, Aktion „Gerätewert abrufen“, dann „Einen Wert an
+  Emoncms senden“ mit Knoten `gladys`, Eingang `wohnzimmer` und dem gelesenen
+  Wert.
+- **Leistung der Wärmepumpe**: Ist der Leistungs-Feed der Wärmepumpe
+  hinzugefügt, kann eine Szene einen Warmwasserbereiter ausschalten, wenn die
+  Leistung eine Schwelle überschreitet (ein Geräteauslöser von Gladys, nichts
+  Besonderes an der Integration).
+
+## Fehlerbehebung
+
+- **„Emoncms antwortet nicht“**: Prüfe die Adresse im Browser von einem Rechner
+  im selben Netz wie Gladys. Ein emonPi kann unter `http://emonpi.local`
+  erreichbar sein, aber der Container der Integration löst keine `.local`-Namen
+  auf: Nimm lieber die IP-Adresse.
+- **„Keine Emoncms-API unter dieser Adresse“**: Die Adresse öffnet eine andere
+  Webseite. Füge den Unterpfad `/emoncms` hinzu oder entferne ihn.
+- **„API-Schlüssel von Emoncms abgelehnt“**: Kopiere den Lese-API-Schlüssel
+  erneut aus My Account. Ein Schreibschlüssel liest auch, ist aber nicht nötig.
+- **Ein Feed erscheint gestoppt, obwohl er aktualisiert wird**: Die Uhren von
+  Gladys und dem Emoncms-Server weichen ab, oder der Feed wird seltener
+  gespeichert als die eingestellte Dauer. Erhöhe **Feed gestoppt nach**.
+- **Ein neuer Feed fehlt**: Prüfe **Zu verfolgende Feeds** und
+  **aktualisiere** dann das Gerät im Tab Entdecken.
+
+## Grenzen
+
+- Ein Emoncms-Konto pro Installation der Integration.
+- Die IDs und Tags der Feeds identifizieren die Funktionen: Ein Feed, der zu
+  einem anderen Tag wechselt, wird eine neue Funktion eines anderen Geräts,
+  ohne den alten Verlauf.
+- Die Eingänge von Emoncms werden nicht gelesen, nur die Feeds. Der Verlauf, der
+  schon in Emoncms liegt, wird nicht in Gladys importiert.
+- Gladys kann die Zustände seiner Geräte nicht automatisch an Emoncms senden:
+  Eine Szene mit der Aktion „Einen Wert an Emoncms senden“ erledigt das, ein
+  Wert nach dem anderen.
+- emoncms.org: dieselbe API, nicht getestet; halte dich an die
+  Nutzungsregeln (eine Aktualisierung alle 10 Sekunden oder seltener reicht
+  völlig).
