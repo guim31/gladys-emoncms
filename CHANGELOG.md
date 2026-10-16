@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-16
+
 ### Added
 
 - Emoncms feeds in Gladys: one device per feed tag, one feature per feed, from
@@ -24,3 +26,6 @@ the notes of the version's GitHub Release.
   feeds.
 - "Test the connection" action, feed filter, refresh interval from 5 seconds
   to 5 minutes, English, French, German and Spanish.
+
+[Unreleased]: https://github.com/guim31/gladys-emoncms/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-emoncms/releases/tag/v1.0.0
