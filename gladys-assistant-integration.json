@@ -8,8 +8,8 @@
     "de": "Deine Emoncms-Feeds in Gladys (emonPi, emonTx, emonHP): Leistung, Energie, Temperaturen …",
     "es": "Sus feeds de Emoncms en Gladys (emonPi, emonTx, emonHP): potencia, energía, temperaturas…"
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-emoncms:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-emoncms:1.0.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-emoncms/main/cover.png",
   "categories": ["energy"],
